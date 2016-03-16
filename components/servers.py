@@ -17,12 +17,12 @@ def db_insert(sensor_id, sensor_value):
     sql = """INSERT INTO power (datetime,sensor_id,sensor_value) VALUES (%s,%s,%s)"""
 
     try:
-        print "Writing to database..."
+        #print "Writing to database..."
         cur.execute(sql, (sql_date, sensor_id, sensor_value))
         db.commit()
-        print "Write complete!"
+        #print "Write complete!"
 
     except:
         # Rollback in case there is any error
         db.rollback()
-        print "Failed writing to database"
+        #print "Failed writing to database"

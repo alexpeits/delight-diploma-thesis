@@ -1,1 +1,1 @@
-# lights
+# efficient-lights-thesis

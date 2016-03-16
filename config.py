@@ -27,11 +27,17 @@ DIM_INCR_DOWN = '01' # .. and increment down
 DIM_TO_VAL = '04' # command to dim to a specific value
 THRESH_MIN = 0
 THRESH_MAX = 800
+NODE_TIMEOUT = 1.5 # max wait time to receive reading in seconds
+OPERATION_CYCLE = 20 # duration of each cyle of operation in seconds
+MAX_INCR = 40
 
 CONFIGPATH = os.path.join(basedir, 'thesis.conf')
-GUI_CONF_PATH = '/var/www/data/gui.conf'
-
-SEND_DELAY = 3.0/2
+#GUI_CONF_PATH = '/var/www/data/gui.conf'
+GUI_CONF_DIR = os.path.join(basedir, 'web_server', 'data')
+GUI_CONF_PATH = os.path.join(GUI_CONF_DIR, 'gui.conf')
+SCT_TRAIN_DATA_DIR = os.path.join(basedir, 'sct_train_data.txt')
+SEND_DELAY = 1.0/2
+#SEND_DELAY = 1.5
 
 # MySQL setup
 SQL_HOST = 'localhost'
@@ -45,10 +51,10 @@ db = MySQLdb.connect(host=SQL_HOST, user=SQL_USER,
 cur = db.cursor()
 
 # MQTT setup
-#MQTT_HOST = 'localhost'
-MQTT_HOST = "broker.mqttdashboard.com"
-MQTT_PORT = 1883
-#MQTT_HOST = '94.70.239.217'
+MQTT_HOST = 'localhost'
+#MQTT_HOST = "broker.mqttdashboard.com"
+MQTT_PORT = 1884
+#MQTT_HOST = '127.0.0.1'
 #MQTT_PORT = 1883
 MQTT_BASE = 'thesis/power/'
 # instantiation
@@ -58,7 +64,7 @@ mqttc.loop_start()
 
 # NRF24 setup-instantiation
 pipes = [[0xf0, 0xf0, 0xf0, 0xf0, 0xe1],
-		[0xf0, 0xf0, 0xf0, 0xf0, 0xd2]]
+		 [0xf0, 0xf0, 0xf0, 0xf0, 0xd2]]
 radio = NRF24()
 radio.begin(0, 0, 25, 18) #set gpio 25 as CE pin
 radio.setRetries(5, 15)
