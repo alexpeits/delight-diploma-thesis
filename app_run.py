@@ -26,6 +26,12 @@ def adjust_lights(send_vals=None):
 
 
 class GUIDataChangeHandler(FileSystemEventHandler):
+    """
+    This class handles the execution of commands from
+    the WebGUI. Upon the change of the conf file, the
+    'on_modified' method is called.
+
+    """
     def __init__(self, queue):
         FileSystemEventHandler.__init__(self)
         self.queue = queue
@@ -42,7 +48,7 @@ class GUIDataChangeHandler(FileSystemEventHandler):
 
         """
         global gui_data
-	with open(GUI_CONF_PATH, 'r') as f:
+        with open(GUI_CONF_PATH, 'r') as f:
             gui_new = json.loads(f.read())
         # update light instance and class attributes
         for key, val in gui_new.items():
@@ -154,12 +160,11 @@ print 'INITIAL', v_send
 for i, light in enumerate(Light.instances):
     light.dim_real_value(v_send[i])
 
-thresh = 420
 
-queue = Queue.Queue()
+queue = Queue.Queue(1) # With size 1, queue acts as a lock
 gui_data_handler = GUIDataChangeHandler()
 observer = Observer()
-observer.schedule(gui_data_handler, "/var/www/data", recursive=False)
+observer.schedule(gui_data_handler, GUI_CONF_PATH, recursive=False)
 observer.start()
 
 try:
