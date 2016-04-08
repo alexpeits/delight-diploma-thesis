@@ -1,10 +1,20 @@
 from RPi.GPIO import cleanup as GPIOcleanup
 from scipy.interpolate import interp1d
+from numpy import clip
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-import re
 from threading import Thread
 import Queue
+import re
+import sys
+import operator
+from time import strftime
+
+try:
+    from colorize import clr_ret as clr
+except ImportError:
+    def clr(text, *args):
+        return text
 
 from lights import *
 
@@ -17,21 +27,94 @@ def request_readings(sensor_type):
     for sensor in sensor_type.instances:
         sensor.get_reading()
 
-def adjust_lights(send_vals=None):
-    if send_vals==None:
+def adjust_lights():
+    states = [light.state for light in Light.instances]
+    print 'BEFORE:', states
+    if 'auto' not in states and 'nauto' not in states:
+        print 'no auto light found'
         return
-    for i, light in enumerate(Light.instances):
-        if light.state=='auto':
-            light.dim_increment(send_vals[i])
 
+    thresh = Light.thresh
+    cur_reads = [thresh if abs(int(sensor.current_read)-thresh)<=20
+                 else int(sensor.current_read)
+                 for sensor in LightSensor.instances]
+
+    print cur_reads
+
+    diff = abs(sum(cur_reads)/2 - thresh)
+    #for reading in cur_reads:
+    #    if abs(reading-thresh)>60:
+    #        Light.mean_percentage *= 4
+    #    elif abs(reading-thresh)>30:
+    #        Light.mean_percentage *= 2
+    #        break
+    #else:
+    #    Light.mean_percentage = abs(m_dim/10.0)
+
+    # If we have one light at auto and one at on or off, then
+    # the send value for the auto light is calculated using a
+    # weighted average.
+    # ONLY IN CASE OF 2 LIGHT INSTANCES!
+    send_vals = get_next_dim(m_list, cur_reads, thresh)
+    print "DEBUG", send_vals
+    for i, light in enumerate(Light.instances):
+        light.update_sum(send_vals[i])
+        states[i] = light.state
+    print 'AFTER:', states
+
+    if 'auto' not in states:
+        print 'no auto light found'
+        return
+
+    if 'auto' in states and ('on' in states or 'off' in states or 'nauto' in states):
+        #send_val = 10.0*(len(LightSensor.instances)*thresh-sum(cur_reads))/sum([m_list[i][j]
+        #                                                                        for i in xrange(len(LightSensor.instances))
+        #                                                                        for j in xrange(len(Light.instances))
+        #                                                                        if Light.instances[j].state=='auto'])
+
+        auto_index = [light.state for light in Light.instances].index('auto')
+
+        mean_index, mean = max(enumerate(zip(*m_list)[auto_index]), key=operator.itemgetter(1))
+        send_vals = [0 if light.state!='auto'
+                     else (10/mean)*(thresh-cur_reads[mean_index])
+                     for light in Light.instances]
+
+
+    print 'Algorithm result:', send_vals
+    for i, light in enumerate(Light.instances):
+        if light.state=='auto' and send_vals[i]!=0:
+            light.dim_increment(send_vals[i], diff)
+
+def init_lights():
+    """
+    Initial dimming to a value that results to the desired
+    threshold. If the state from the conf file is 'on' or 'off',
+    dim accordingly. If it is 'auto', dim to the closest multiple
+    of 10, which is bigger than the calculated value.
+
+    """
+    from math import ceil
+
+    v_send = get_next_dim(m_list,
+                          [sensor.setup_table[0][0] for sensor in LightSensor.instances],
+                          Light.thresh)
+    print v_send
+    for i, light in enumerate(Light.instances):
+        if light.state=='on':
+            light.dim_to_val(light.intens)
+        elif light.state == 'off':
+            light.dim_to_val(0)
+        else:
+            intens = 10*ceil(v_send[i]/10.0)
+            light.dim_to_val(clip(int(intens), 0, 100))
+
+def _db_insert(sct):
+    db_insert(int(sct.addr), sct.current_read)
+
+def _mqtt_publish(sct):
+    mqtt_publish(sct.addr, sct.current_read)
 
 class GUIDataChangeHandler(FileSystemEventHandler):
-    """
-    This class handles the execution of commands from
-    the WebGUI. Upon the change of the conf file, the
-    'on_modified' method is called.
-
-    """
     def __init__(self, queue):
         FileSystemEventHandler.__init__(self)
         self.queue = queue
@@ -48,6 +131,7 @@ class GUIDataChangeHandler(FileSystemEventHandler):
 
         """
         global gui_data
+        print clr('Received command from WebGUI', 'green')
         with open(GUI_CONF_PATH, 'r') as f:
             gui_new = json.loads(f.read())
         # update light instance and class attributes
@@ -57,11 +141,11 @@ class GUIDataChangeHandler(FileSystemEventHandler):
             elif key[9:]=='state':
                 Light.mapping.get(key[6:8]).state = val
             elif key[9:]=='int':
-                Light.mapping.get(key[6:8]).intens = val
+                Light.mapping.get(key[6:8]).intens = int(val) if val is not None else 50
         # queue any dimming tasks, if necessary
         for light in Light.instances:
-            state = ''.join['light_', light.addr, '_state']
-            intens = ''.join['light_', light.addr, '_int']
+            state = ''.join(['light_', light.addr, '_state'])
+            intens = ''.join(['light_', light.addr, '_int'])
 
             if gui_new.get(state) == 'auto':
                 continue
@@ -92,7 +176,7 @@ class CommHandler(Thread):
     def run(self):
         while True:
             task = self.queue.get()
-            _execute(task)
+            self._execute(task)
             self.queue.task_done()
 
     def _execute(self, task):
@@ -105,14 +189,54 @@ class CommHandler(Thread):
         to unpack it.
 
         """
-        task[0](*task[1])
+        routine = task[0]
+        args = task[1]
+        print clr('Executing task:{} with args:{}'.format(routine.__name__, args),
+                    'red', False)
+        #task[0](*task[1])
+        routine(*args)
+
+
+class PrintWithTime:
+    """
+    Every print statement gets printed
+    to stdout with the current date and
+    time appended.
+    Usage:
+        std_out = sys.stdout
+        sys.stdout = PrintWithTime()
+
+    """
+    n = True
+    def write(self, s):
+        if s == '\n':
+            std_out.write(s)
+            self.n = True
+        elif self.n:
+            now = strftime('%H:%M:%S')
+            std_out.write('[%s] %s' % (now, s))
+            self.n = False
+        else:
+            std_out.write(s)
+
 
 
 # instantiate with an address
 light_1 = Light('06')
 light_2 = Light('07')
-lsensor_1 = LightSensor('04')
-lsensor_2 = LightSensor('03')
+lsensor_1 = LightSensor('03')
+lsensor_2 = LightSensor('04')
+
+with open(SCT_TRAIN_DATA_DIR, 'r') as f:
+    sct_train_data = json.loads(f.read())
+print '[*]', sct_train_data
+
+sct_1 = DissipationSensor(addr='08', max_power=40,
+    power_recv=sct_train_data.get('08', None)
+    )
+sct_2 = DissipationSensor(addr='09', max_power=40,
+    power_recv=sct_train_data.get('09', None)
+    )
 
 #TODO: arg parsing
 setup_from_file()
@@ -144,57 +268,51 @@ print 'd_dim: {}'.format(d_dim)
 print 'm_dim: {}'.format(m_dim)
 print gui_data
 
-#based on thresh, find the initial light intensity
-v_send = get_next_dim(m_list, [sensor.setup_table[0][0] for sensor in LightSensor.instances], thresh)
+init_lights()
 
-print 'DEBUG', v_send
-for i, val in enumerate(v_send):
-    for j, dim in enumerate(DIM_TABLE):
-        if val<j*10:
-            flag = j
-            break
-	conv = interp1d([(flag-1)*10, flag*10], [DIM_TABLE[j-1], DIM_TABLE[j]])
-	v_send[i] = int(conv(v_send[i]))
+std_out = sys.stdout
+sys.stdout = PrintWithTime()
 
-print 'INITIAL', v_send
-for i, light in enumerate(Light.instances):
-    light.dim_real_value(v_send[i])
+queue = Queue.Queue(1)
 
+handler = CommHandler(queue)
+handler.setDaemon(True)
 
-queue = Queue.Queue(1) # With size 1, queue acts as a lock
-gui_data_handler = GUIDataChangeHandler()
+gui_data_handler = GUIDataChangeHandler(queue)
 observer = Observer()
-observer.schedule(gui_data_handler, GUI_CONF_PATH, recursive=False)
+observer.schedule(gui_data_handler, GUI_CONF_DIR, recursive=False)
+
+handler.start()
 observer.start()
+timer = Timer(0)
 
 try:
     while True:
+        if not timer():
+            task = [request_readings, [DissipationSensor]]
+            queue.put(task)
+
+            for sct in DissipationSensor.instances:
+                task = [_db_insert, [sct]]
+                queue.put(task)
+                task = [_mqtt_publish, [sct]]
+                queue.put(task)
+            timer = Timer(15)
+
         task = [request_readings, [LightSensor]]
         queue.put(task)
-        cur_reads = [sensor.current_read for sensor in LightSensor.instances]
 
-        #task = [request_readings, [DissipationSensor]]
-        #queue.put(task)
-
-        cur_reads = [thresh if abs(i-thresh)<=12 else i for i in cur_reads]
-        for reading in cur_reads:
-            if abs(reading-thresh)>30:
-                Light.mean_percentage *= 2
-                break
-        else:
-            Light.mean_percentage = abs(m_dim/10.0)
-
-        send_next = get_next_dim(m_list, cur_reads, Light.thresh)
-        print cur_reads
-        print send_next
-
-        task = [adjust_lights, [send_next]]
+        task = [adjust_lights, []]
         queue.put(task)
 
-        time.sleep(5)
+
+        OPERATION_CYCLE = 1 # debugging
+        time.sleep(OPERATION_CYCLE)
 
 except KeyboardInterrupt:
-    prompt = raw_input('Close all lights? [y/n] ')
+    print clr('Wait for all tasks to be completed...', 'purple')
+    queue.join()
+    prompt = raw_input('Close all lights? (y/[n]) ')
     if prompt == 'y':
         close_all_lights()
 
@@ -202,4 +320,4 @@ except KeyboardInterrupt:
     db.close()
     mqttc.disconnect()
     GPIOcleanup()
-    print 'KEYBOARD INTERRUPT'
+    print 'EXITING'

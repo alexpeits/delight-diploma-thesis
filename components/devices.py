@@ -35,6 +35,7 @@ class Sensor(object):
         # setup_table length equal to no. of lights
         self.setup_table = [[] for _ in xrange(len(Light.instances))]
         self.current_read = Light.thresh # most recent reading
+        self.SEND_DELAY = SEND_DELAY
 
     def get_reading(self):
         """
@@ -49,7 +50,7 @@ class Sensor(object):
         :rtype: int or None
 
         """
-        time.sleep(SEND_DELAY)
+        time.sleep(self.SEND_DELAY)
 
         send_data = ''.join([self.addr, GET_READ, '        '])
         radio.write(send_data)
@@ -93,11 +94,11 @@ class Light(object):
         self.addr = addr
         self.instances.append(self)
         self.mapping[addr] = self
-        self.state = 'auto'
+        self._state = 'auto'
         self.intens = self.thresh
         self._sum = 0
 
-    def dim_increment(self, dim):
+    def dim_increment(self, dim, diff):
         """
         Dim by an increment. The increment is provided
         as a percent value, and it is modified to a
@@ -108,7 +109,8 @@ class Light(object):
         :rtype: bool
 
         """
-        incr_send = abs(int(self.mean_percentage*dim))
+        times = self.make_mult(diff)
+        incr_send = abs(int(times*self.mean_percentage*dim))
         if incr_send>MAX_INCR:
             incr_send = MAX_INCR
         if dim>0:
@@ -130,6 +132,15 @@ class Light(object):
         time.sleep(SEND_DELAY)
         radio.write(send_data)
         #print 'Light {} to value {}%'.format(self.addr, val)
+
+    def make_mult(self, diff):
+        if diff < 30:
+            return 1
+        if diff < 60:
+            return 2
+        if diff < 90:
+            return 4
+        return 5
 
     def dim_real_value(self, val):
         """
@@ -153,6 +164,16 @@ class Light(object):
         elif abs_sum<=600 and self.state=='nauto':
             self.state = 'auto'
         self._sum = clip(self._sum, -600, 600)
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, newstate):
+        if self._state == 'nauto' and self._newstate != 'nauto':
+            self._sum = 0
+        self._state = newstate
 
 
 
@@ -198,11 +219,38 @@ class DissipationSensor(Sensor):
         self._max_recv = max(power_recv)
         self._min_pow = min(power_expected)
         self._max_pow = max(power_expected)
+        self.recv_read = 0
+        self.SEND_DELAY = 2
 
     def get_reading(self):
-        Sensor.get_reading(self)
+        time.sleep(self.SEND_DELAY)
+        cur_read = None
+        send_data = ''.join([self.addr, GET_READ, '        '])
+        radio.write(send_data)
+
+        timer = Timer(NODE_TIMEOUT)
+        radio.startListening()
+        while not radio.available(pipe, True) and timer():
+            time.sleep(1000/1000000.0)
+        recv_buffer = []
+        radio.read(recv_buffer, radio.getDynamicPayloadSize())
+        recv_data = ''.join(chr(i) for i in recv_buffer)
+        radio.stopListening()
+
+        dest = recv_data[:2]
+        source = recv_data[2:4]
+        #print 'Got packet: {}'.format(recv_data)
+        if (source == self.addr) and (dest == GATEWAY_ADDR):
+            self.current_read = int(recv_data[-4:])
+            cur_read = self.current_read
+            self.recv_read = self.current_read
+            print clr('sensor {}, received {}'.format(self.addr, self.current_read),
+                        'cyan')
+        if cur_read is None:
+            self.current_read = self.recv_read
         print 'SCT reading:', self.current_read
         self.current_read = self.remove_error(self.current_read)
+
         print 'Converted to:', self.current_read
 
     def get_raw_reading(self):
