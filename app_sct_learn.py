@@ -1,3 +1,13 @@
+"""
+Machine learning application for the power sensor (SCT-013)
+
+This program collects the training data and stores them in
+the file 'sct_train_data.txt'.
+
+The DissipationSensor class is then responsible for applying
+gradient descent (or least squares).
+"""
+
 from lights import *
 from collections import defaultdict
 import json, time

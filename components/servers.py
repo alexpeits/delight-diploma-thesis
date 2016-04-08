@@ -7,7 +7,6 @@ from ..config import *
 def mqtt_publish(topic, data):
     mqttc.publish(''.join([MQTT_BASE, topic]), "%s" % data, 1, retain=True)
 
-
 def db_insert(sensor_id, sensor_value):
     min_val = floor(sensor_value)
     max_val = ceil(sensor_value)

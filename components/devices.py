@@ -223,31 +223,7 @@ class DissipationSensor(Sensor):
         self.SEND_DELAY = 2
 
     def get_reading(self):
-        time.sleep(self.SEND_DELAY)
-        cur_read = None
-        send_data = ''.join([self.addr, GET_READ, '        '])
-        radio.write(send_data)
-
-        timer = Timer(NODE_TIMEOUT)
-        radio.startListening()
-        while not radio.available(pipe, True) and timer():
-            time.sleep(1000/1000000.0)
-        recv_buffer = []
-        radio.read(recv_buffer, radio.getDynamicPayloadSize())
-        recv_data = ''.join(chr(i) for i in recv_buffer)
-        radio.stopListening()
-
-        dest = recv_data[:2]
-        source = recv_data[2:4]
-        #print 'Got packet: {}'.format(recv_data)
-        if (source == self.addr) and (dest == GATEWAY_ADDR):
-            self.current_read = int(recv_data[-4:])
-            cur_read = self.current_read
-            self.recv_read = self.current_read
-            print clr('sensor {}, received {}'.format(self.addr, self.current_read),
-                        'cyan')
-        if cur_read is None:
-            self.current_read = self.recv_read
+        Sensor.get_reading(self)
         print 'SCT reading:', self.current_read
         self.current_read = self.remove_error(self.current_read)
 

@@ -42,19 +42,7 @@ def adjust_lights():
     print cur_reads
 
     diff = abs(sum(cur_reads)/2 - thresh)
-    #for reading in cur_reads:
-    #    if abs(reading-thresh)>60:
-    #        Light.mean_percentage *= 4
-    #    elif abs(reading-thresh)>30:
-    #        Light.mean_percentage *= 2
-    #        break
-    #else:
-    #    Light.mean_percentage = abs(m_dim/10.0)
 
-    # If we have one light at auto and one at on or off, then
-    # the send value for the auto light is calculated using a
-    # weighted average.
-    # ONLY IN CASE OF 2 LIGHT INSTANCES!
     send_vals = get_next_dim(m_list, cur_reads, thresh)
     print "DEBUG", send_vals
     for i, light in enumerate(Light.instances):
@@ -67,18 +55,12 @@ def adjust_lights():
         return
 
     if 'auto' in states and ('on' in states or 'off' in states or 'nauto' in states):
-        #send_val = 10.0*(len(LightSensor.instances)*thresh-sum(cur_reads))/sum([m_list[i][j]
-        #                                                                        for i in xrange(len(LightSensor.instances))
-        #                                                                        for j in xrange(len(Light.instances))
-        #                                                                        if Light.instances[j].state=='auto'])
-
         auto_index = [light.state for light in Light.instances].index('auto')
 
         mean_index, mean = max(enumerate(zip(*m_list)[auto_index]), key=operator.itemgetter(1))
         send_vals = [0 if light.state!='auto'
                      else (10/mean)*(thresh-cur_reads[mean_index])
                      for light in Light.instances]
-
 
     print 'Algorithm result:', send_vals
     for i, light in enumerate(Light.instances):
@@ -260,14 +242,6 @@ d_dim = [v_dim[i+1] - v_dim[i] for i in xrange(len(v_dim)-1)]
 m_dim = sum(d_dim)/len(d_dim)
 Light.mean_percentage = abs(m_dim/10.0)
 
-recv_reads = [thresh, thresh] # storage for sensor readings
-print 'v_list: {}'.format(v_list)
-print 'd_list: {}'.format(d_list)
-print 'm_list: {}'.format(m_list)
-print 'd_dim: {}'.format(d_dim)
-print 'm_dim: {}'.format(m_dim)
-print gui_data
-
 init_lights()
 
 std_out = sys.stdout
@@ -306,7 +280,7 @@ try:
         queue.put(task)
 
 
-        OPERATION_CYCLE = 1 # debugging
+        #OPERATION_CYCLE = 1 # debugging
         time.sleep(OPERATION_CYCLE)
 
 except KeyboardInterrupt:

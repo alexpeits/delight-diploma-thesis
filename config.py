@@ -15,8 +15,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 dim_dir = os.path.join(basedir, 'plots', 'dim_table.json')
 with open(dim_dir, 'r') as f:
     dim_table_ints = json.loads(f.read())
-#DIM_TABLE = ["600", "500", "460", "430", "390",
-#            "360", "300", "250", "200", "100", "50"]
 DIM_TABLE = [str(i) for i in dim_table_ints]
 GET_READ = '01' # command to request reading from a sensor
 GATEWAY_ADDR = '01' # our address
@@ -32,17 +30,15 @@ OPERATION_CYCLE = 20 # duration of each cyle of operation in seconds
 MAX_INCR = 40
 
 CONFIGPATH = os.path.join(basedir, 'thesis.conf')
-#GUI_CONF_PATH = '/var/www/data/gui.conf'
 GUI_CONF_DIR = os.path.join(basedir, 'web_server', 'data')
 GUI_CONF_PATH = os.path.join(GUI_CONF_DIR, 'gui.conf')
 SCT_TRAIN_DATA_DIR = os.path.join(basedir, 'sct_train_data.txt')
 SEND_DELAY = 1.0/2
-#SEND_DELAY = 1.5
 
 # MySQL setup
 SQL_HOST = 'localhost'
 SQL_USER = 'root'
-SQL_PW = os.environ.get('MYSQL_PW') or 'raspberry'
+SQL_PW = os.environ.get('MYSQL_PW')
 SQL_DB = 'thesis'
 SQL_TABLE = 'power'
 # instantiation
@@ -52,10 +48,7 @@ cur = db.cursor()
 
 # MQTT setup
 MQTT_HOST = 'localhost'
-#MQTT_HOST = "broker.mqttdashboard.com"
 MQTT_PORT = 1884
-#MQTT_HOST = '127.0.0.1'
-#MQTT_PORT = 1883
 MQTT_BASE = 'thesis/power/'
 # instantiation
 mqttc = mqtt.Client()
