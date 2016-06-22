@@ -1,0 +1,16 @@
+[database]
+PG_USER=user
+PG_PASSWORD=password
+PG_DB=database
+DB_URI=postgresql+psycopg2://user:password@localhost/database
+
+[mqtt]
+HOST=localhost
+PORT=1884
+TOPIC_BASE=topic/base/
+
+[gui]
+SECRET_KEY=ultra-super-secret
+DEBUG=False
+HOST=0.0.0.0
+PORT=5000
