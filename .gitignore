@@ -1,0 +1,14 @@
+# python
+*.py[cod]
+
+# vim
+*.swp
+
+# decouple
+config.ini
+
+# docs
+docs/_build/
+
+# nrf24 module
+nrf24.py
