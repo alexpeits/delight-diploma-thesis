@@ -33,7 +33,8 @@ config.read(_CONFIG)
 def cast_bool(section, option):
     opt = config.get(section, option).lower()
     if opt not in _BOOL:
-        raise ValueError('Invalid value set for DEBUG in config.')
+        raise ValueError('Invalid value set for {} in config.'
+                         .format(option))
     return _BOOL[opt]
 
 
