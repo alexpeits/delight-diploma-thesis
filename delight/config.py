@@ -12,8 +12,14 @@ using the python built-in ConfigParser
 """
 
 from ConfigParser import SafeConfigParser
+from ConfigParser import NoOptionError
 import os
 
+
+# this is exactly how python-decouple handles booleans
+# https://github.com/henriquebastos/python-decouple
+_BOOL = {'true': True, 'on': True, '1': True,
+         'false': False, 'off': False, '0': False}
 
 # Locate and load config.ini
 _CONF_FILENAME = 'config.ini'
@@ -24,10 +30,20 @@ config = SafeConfigParser()
 config.read(_CONFIG)
 
 
+def cast_bool(section, option):
+    opt = config.get(section, option).lower()
+    if opt not in _BOOL:
+        raise ValueError('Invalid value set for DEBUG in config.')
+    return _BOOL[opt]
+
+
 class DBConfig(object):
     DB_URI = config.get('database', 'DB_URI')
 
 
 class GUIConfig(object):
     SECRET_KEY = config.get('gui', 'SECRET_KEY')
-    DEBUG = config.get('gui', 'DEBUG')
+    try:
+        DEBUG = cast_bool('gui', 'DEBUG')
+    except NoOptionError:
+        DEBUG = False
