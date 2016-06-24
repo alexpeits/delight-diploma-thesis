@@ -50,6 +50,16 @@ class DBConfig(object):
         DB_URI = config.get('database', 'DB_URI')
 
 
+class MQTTConfig(object):
+    HOST = config.get('mqtt', 'HOST')
+    PORT = config.get('mqtt', 'PORT')
+    if TESTING:
+        TOPIC_BASE = config.get('mqtt', 'TOPIC_TEST_BASE')
+    else:
+        TOPIC_BASE  = config.get('mqtt', 'TOPIC_BASE')
+
+
+
 class GUIConfig(object):
     SECRET_KEY = config.get('gui', 'SECRET_KEY')
     try:
