@@ -37,9 +37,17 @@ def cast_bool(section, option):
                          .format(option))
     return _BOOL[opt]
 
+try:
+    TESTING = cast_bool('global', 'TESTING')
+except NoOptionError:
+    TESTING = False
+
 
 class DBConfig(object):
-    DB_URI = config.get('database', 'DB_URI')
+    if TESTING:
+        DB_URI = config.get('database', 'DB_TEST_URI')
+    else:
+        DB_URI = config.get('database', 'DB_URI')
 
 
 class GUIConfig(object):

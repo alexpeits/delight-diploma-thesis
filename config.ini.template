@@ -1,13 +1,15 @@
+[global]
+TESTING=True
+
 [database]
-PG_USER=user
-PG_PASSWORD=password
-PG_DB=database
-DB_URI=postgresql+psycopg2://user:password@localhost/database
+DB_URI=postgresql+psycopg2://user:password@localhost/prod_database
+DB_TEST_URI=postgresql+psycopg2://user:password@localhost/test_database
 
 [mqtt]
 HOST=localhost
 PORT=1884
 TOPIC_BASE=topic/base/
+TOPIC_TEST_BASE=topic/testbase/
 
 [gui]
 SECRET_KEY=ultra-super-secret
