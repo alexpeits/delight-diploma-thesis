@@ -64,5 +64,8 @@ class GUIConfig:
     except NoOptionError:
         DEBUG = False
 
-GUI_HOST = config.get('gui', 'HOST')
-GUI_PORT = int(config.get('gui', 'PORT'))
+    # not used by Flask class, but put them in
+    # here anyway
+    HOST = config.get('gui', 'HOST')
+    PORT = int(config.get('gui', 'PORT'))
+

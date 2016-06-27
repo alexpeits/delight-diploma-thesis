@@ -6,7 +6,7 @@ Command line tool to facilitate project usage.
 
 import click
 
-from delight.config import GUI_HOST, GUI_PORT
+from delight.config import GUIConfig
 
 
 @click.group()
@@ -32,8 +32,8 @@ def test():
 
 
 @cli.command()
-@click.option('--host', '-h', default=GUI_HOST)
-@click.option('--port', '-p', default=GUI_PORT)
+@click.option('--host', '-h', default=GUIConfig.HOST)
+@click.option('--port', '-p', default=GUIConfig.PORT)
 def runserver(host, port):
     """Create app and run it."""
     from delight.gui import create_app
