@@ -1,13 +1,14 @@
 """
-Dummy components to be used in testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dummy components for dev & testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Components defined here abstract away hardware calls or
-other calls that should not be used in testing.
+other calls that should not be used in development or testing.
 
 """
 
 import time
+import random
 
 
 class DummyObject(object):
@@ -39,7 +40,10 @@ class DummyRadio(object):
 
     def read(self, *args, **kwargs):
         time.sleep(self.READ_TIME)
-        return 'TODO'
+        # return a random float in the range [0-1]
+        # the caller class can then adjust the
+        # random number to its needs
+        return random.random()
 
     def available(self, *args, **kwargs):
         time.sleep(self.WAIT_AVAIL_TIME)

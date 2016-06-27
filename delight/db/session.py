@@ -2,7 +2,10 @@
 Database session creation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This module exports the sqlalchemy `session` object
+This module exports the sqlalchemy `session` object.
+Because there is only one database per session, the
+session object is instantiated here, acting as a
+Singleton.
 
 """
 

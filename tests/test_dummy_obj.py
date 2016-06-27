@@ -1,6 +1,7 @@
-"""
-Testing module to test objects defined in
-delight/components/dummy.py
+"""Dummy objects test module.
+
+Used to test classes defined in delight/components/dummy
+
 """
 
 import unittest
@@ -10,6 +11,8 @@ from delight.components.dummy import DummyRadio
 
 
 class TestDummyRadio(unittest.TestCase):
+    """Tests for the 'patched' NRF24 class."""
+
     def setUp(self):
         self.radio = DummyRadio()
 

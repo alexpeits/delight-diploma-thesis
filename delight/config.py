@@ -15,12 +15,6 @@ from ConfigParser import SafeConfigParser
 from ConfigParser import NoOptionError
 import os
 
-
-# this is exactly how python-decouple handles booleans
-# https://github.com/henriquebastos/python-decouple
-_BOOL = {'true': True, 'on': True, '1': True,
-         'false': False, 'off': False, '0': False}
-
 # Locate and load config.ini
 _CONF_FILENAME = 'config.ini'
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -29,6 +23,10 @@ _CONFIG = os.path.join(_THIS_DIR, os.pardir, _CONF_FILENAME)
 config = SafeConfigParser()
 config.read(_CONFIG)
 
+# this is exactly how python-decouple handles booleans
+# https://github.com/henriquebastos/python-decouple
+_BOOL = {'true': True, 'on': True, '1': True,
+         'false': False, 'off': False, '0': False}
 
 def cast_bool(section, option):
     opt = config.get(section, option).lower()
@@ -43,14 +41,14 @@ except NoOptionError:
     TESTING = False
 
 
-class DBConfig(object):
+class DBConfig:
     if TESTING:
         DB_URI = config.get('database', 'DB_TEST_URI')
     else:
         DB_URI = config.get('database', 'DB_URI')
 
 
-class MQTTConfig(object):
+class MQTTConfig:
     HOST = config.get('mqtt', 'HOST')
     PORT = config.get('mqtt', 'PORT')
     if TESTING:
@@ -59,10 +57,12 @@ class MQTTConfig(object):
         TOPIC_BASE  = config.get('mqtt', 'TOPIC_BASE')
 
 
-
-class GUIConfig(object):
+class GUIConfig:
     SECRET_KEY = config.get('gui', 'SECRET_KEY')
     try:
         DEBUG = cast_bool('gui', 'DEBUG')
     except NoOptionError:
         DEBUG = False
+
+GUI_HOST = config.get('gui', 'HOST')
+GUI_PORT = int(config.get('gui', 'PORT'))

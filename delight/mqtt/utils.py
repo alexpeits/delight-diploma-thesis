@@ -4,7 +4,7 @@ MQTT broker utilities
 
 """
 
-from delight.mqtt.client import mqtt_client
+from delight.mqtt.client import mqttc
 from delight.config import MQTTConfig
 
 
@@ -19,4 +19,4 @@ def create_topic_uri(topic):
 def publish(topic, data):
     """Publish data to a given topic in the MQTT server."""
     topic_uri = create_topic_uri(topic)
-    mqtt_client.publish(topic_uri, str(data), 1, retain=True)
+    mqttc.publish(topic_uri, str(data), 1, retain=True)
