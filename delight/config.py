@@ -54,7 +54,7 @@ class MQTTConfig:
     if TESTING:
         TOPIC_BASE = config.get('mqtt', 'TOPIC_TEST_BASE')
     else:
-        TOPIC_BASE  = config.get('mqtt', 'TOPIC_BASE')
+        TOPIC_BASE = config.get('mqtt', 'TOPIC_BASE')
 
 
 class GUIConfig:

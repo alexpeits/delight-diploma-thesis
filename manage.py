@@ -35,6 +35,7 @@ def test():
 @click.option('--host', '-h', default=GUI_HOST)
 @click.option('--port', '-p', default=GUI_PORT)
 def runserver(host, port):
+    """Create app and run it."""
     from delight.gui import create_app
     app = create_app()
     app.run(host=host, port=port)
