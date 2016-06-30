@@ -2,6 +2,9 @@
 TESTING=True
 
 [database]
+POSTGRES_USER=use
+POSTGRES_PASSWORD=password
+POSTGRES_DB=database
 DB_URI=postgresql+psycopg2://user:password@localhost/prod_database
 DB_TEST_URI=postgresql+psycopg2://user:password@localhost/test_database
 

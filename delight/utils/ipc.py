@@ -19,6 +19,7 @@ class AsyncListener(Thread):
     When there is a task to be executed, AsyncListener pushes
     it in a queue. The task is then executed by the main
     worker. Kinda like an event loop, but not really.
+
     """
 
     def __init__(self, address, queue):
@@ -28,9 +29,9 @@ class AsyncListener(Thread):
         self.queue = queue
 
     def run(self):
-        self.client_conn = self.server.accept()
+        self.client = self.server.accept()
         while True:
-            msg = self.client_conn.recv()
+            msg = self.client.recv()
             self.handle(msg)
 
     def handle(self, msg):
