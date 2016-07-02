@@ -4,6 +4,8 @@ Command line tool to facilitate project usage.
 
 """
 
+import code
+
 import click
 
 from delight.config import GUIConfig
@@ -39,6 +41,11 @@ def runserver(host, port):
     from delight.gui import create_app
     app = create_app()
     app.run(host=host, port=port)
+
+@cli.command()
+def shell():
+    from delight.db.session import session
+    code.interact(local=locals())
 
 
 if __name__ == '__main__':
