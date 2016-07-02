@@ -1,5 +1,6 @@
 [global]
 TESTING=True
+GW_ADDR=01
 
 [database]
 POSTGRES_USER=use

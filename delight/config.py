@@ -35,11 +35,21 @@ def cast_bool(section, option):
                          .format(option))
     return _BOOL[opt]
 
+
+##########
+# global #
+##########
+
 try:
     TESTING = cast_bool('global', 'TESTING')
 except NoOptionError:
     TESTING = False
 
+GW_ADDR = config.get('global', 'GW_ADDR')
+
+############
+# database #
+############
 
 class DBConfig:
     if TESTING:
@@ -47,6 +57,9 @@ class DBConfig:
     else:
         DB_URI = config.get('database', 'DB_URI')
 
+###############
+# mqtt broker #
+###############
 
 class MQTTConfig:
     HOST = config.get('mqtt', 'HOST')
@@ -56,6 +69,9 @@ class MQTTConfig:
     else:
         TOPIC_BASE = config.get('mqtt', 'TOPIC_BASE')
 
+###########
+# web gui #
+###########
 
 class GUIConfig:
     SECRET_KEY = config.get('gui', 'SECRET_KEY')
@@ -64,8 +80,7 @@ class GUIConfig:
     except NoOptionError:
         DEBUG = False
 
-    # not used by Flask class, but put them in
-    # here anyway
+    # not used by Flask class, but include host and port anyway
     HOST = config.get('gui', 'HOST')
     PORT = int(config.get('gui', 'PORT'))
 
