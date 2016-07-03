@@ -1,6 +1,9 @@
 [global]
 TESTING=True
 GW_ADDR=01
+DL_HOST=localhost
+DL_PORT=12345
+DL_AUTH_KEY=super-secret
 
 [database]
 POSTGRES_USER=use

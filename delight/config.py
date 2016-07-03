@@ -46,6 +46,9 @@ except NoOptionError:
     TESTING = False
 
 GW_ADDR = config.get('global', 'GW_ADDR')
+DL_HOST = config.get('global', 'DL_HOST')
+DL_PORT = int(config.get('global', 'DL_PORT'))
+DL_AUTH_KEY = config.get('global', 'DL_AUTH_KEY')
 
 ############
 # database #
