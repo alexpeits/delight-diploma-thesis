@@ -13,13 +13,13 @@ from delight.config import GUIConfig
 
 @click.group()
 def cli():
-    """Base click group for commands."""
+    """Base click group for commands"""
     pass
 
 
 @cli.command()
 def initdb():
-    """Create database tables."""
+    """Create database tables"""
     from delight.db.utils import create_tables
     create_tables()
     click.echo('Database tables created.')
@@ -27,7 +27,7 @@ def initdb():
 
 @cli.command()
 def test():
-    """Run all tests in the tests/ directory."""
+    """Run all tests in the tests/ directory"""
     import unittest
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
@@ -37,7 +37,7 @@ def test():
 @click.option('--host', '-h', default=GUIConfig.HOST)
 @click.option('--port', '-p', default=GUIConfig.PORT)
 def runserver(host, port):
-    """Create app and run it."""
+    """Create app and run it"""
     from delight.gui import create_app
     app = create_app()
     app.run(host=host, port=port)
@@ -67,6 +67,7 @@ def interactive_shell(_use_py=True):
 @cli.command()
 @click.option('--python', '-p', is_flag=True)
 def shell(python):
+    """Interactive shell with custom context"""
     interactive_shell(_use_py=python)
 
 
