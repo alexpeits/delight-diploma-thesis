@@ -42,10 +42,32 @@ def runserver(host, port):
     app = create_app()
     app.run(host=host, port=port)
 
-@cli.command()
-def shell():
+
+def _get_shell_context():
     from delight.db.session import session
-    code.interact(local=locals())
+    from delight.gui import create_app
+    app = create_app()
+    return dict(session=session, app=app)
+
+
+def interactive_shell(_use_py=True):
+    locals().update(**_get_shell_context())
+    if not _use_py:
+        try:
+            import IPython
+            IPython.embed()
+        except ImportError:
+            import code
+            code.interact(local=locals())
+    else:
+        import code
+        code.interact(local=locals())
+
+
+@cli.command()
+@click.option('--python', '-p', is_flag=True)
+def shell(python):
+    interactive_shell(_use_py=python)
 
 
 if __name__ == '__main__':
